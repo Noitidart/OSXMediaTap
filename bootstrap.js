@@ -27,8 +27,8 @@ var core = {
 			// below are added by worker
 			// storage: OS.Path.join(OS.Constants.Path.profileDir, 'jetpack', core.addon.id, 'simple-storage')
 		},
-		pref_branch: 'extensions.Screencastify@jetpack.',
-		cache_key: '1.0' // set to version on release
+		pref_branch: 'extensions.OSXMediaTap@jetpack.',
+		cache_key: Math.random() // set to version on release
 	},
 	os: {
 		// // name: added by worker
@@ -62,7 +62,7 @@ function uninstall(aData, aReason) {
 
 function startup(aData, aReason) {
 
-    Services.scriptloader.loadSubScript('chrome://osxmediatap/content/resources/scripts/Comm/Comm.js', gBootstrap);
+    Services.scriptloader.loadSubScript('chrome://osxmediatap/content/resources/scripts/comm/Comm.js', gBootstrap);
     ({ callInMainworker, callInContentinframescript, callInFramescript, callInContent1 } = CommHelper.bootstrap);
 
     gWkComm = new Comm.server.worker(core.addon.path.scripts + 'MainWorker.js?' + core.addon.cache_key, ()=>core, function(aArg, aComm) {

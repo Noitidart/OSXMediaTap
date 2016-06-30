@@ -1,6 +1,6 @@
 // Imports
 importScripts('resource://gre/modules/osfile.jsm');
-importScripts('chrome://osxmediatap/content/resources/scripts/Comm/Comm.js');
+importScripts('chrome://osxmediatap/content/resources/scripts/comm/Comm.js');
 var {callInBootstrap, callInChildworker1} = CommHelper.mainworker;
 
 // Globals

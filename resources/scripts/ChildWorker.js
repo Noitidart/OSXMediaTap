@@ -1,4 +1,4 @@
-importScripts('chrome://osxmediatap/content/resources/scripts/Comm/Comm.js');
+importScripts('chrome://osxmediatap/content/resources/scripts/comm/Comm.js');
 var {callInBootstrap, callInMainworker} = CommHelper.childworker;
 var gWkComm = new Comm.client.worker();
 

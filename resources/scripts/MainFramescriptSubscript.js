@@ -76,7 +76,7 @@ var pageLoader = {
 	matches: function(aHREF, aLocation) {
 		// do your tests on aHREF, which is aLocation.href.toLowerCase(), return true if it matches
 		var href_lower = aLocation.href.toLowerCase();
-		if (href_lower.startsWith('about:com')) {
+		if (href_lower.startsWith('about:osxmediatap')) {
 			return MATCH_APP;
 		} else if (aLocation.host.toLowerCase() == 'twitter.com') {
 			return MATCH_TWITTER;
