@@ -1,0 +1,9 @@
+@-moz-document url("chrome://browser/content/browser.xul") {
+	#cui_osxmediatap {
+		list-style-image: url('chrome://osxmediatap/content/resources/images/icon-color16.png');
+	}
+	#cui_osxmediatap[cui-areatype="menu-panel"],
+	toolbarpaletteitem[place="palette"] > #cui_osxmediatap {
+		list-style-image: url('chrome://osxmediatap/content/resources/images/icon-color32.png');
+	}
+}

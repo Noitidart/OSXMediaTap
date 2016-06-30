@@ -1,0 +1,2 @@
+content osxmediatap ./ contentaccessible=yes
+locale osxmediatap en-US locale/en-US/
