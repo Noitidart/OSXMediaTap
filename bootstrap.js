@@ -68,29 +68,30 @@ function startup(aData, aReason) {
     gWkComm = new Comm.server.worker(core.addon.path.scripts + 'MainWorker.js?' + core.addon.cache_key, ()=>core, function(aArg, aComm) {
         core = aArg;
 
-		gFsComm = new Comm.server.framescript(core.addon.id);
+		// gFsComm = new Comm.server.framescript(core.addon.id);
+		//
+        // Services.mm.loadFrameScript(core.addon.path.scripts + 'MainFramescript.js?' + core.addon.cache_key, true);
+		//
+        // // desktop:insert_gui
+        // if (core.os.name != 'android') {
+    	// 	// determine gCuiCssFilename for windowListener.register
+    	// 	gCuiCssUri = Services.io.newURI(core.addon.path.styles + 'cui.css', null, null);
+		//
+    	// 	// insert cui
+    	// 	Cu.import('resource:///modules/CustomizableUI.jsm');
+    	// 	CustomizableUI.createWidget({
+    	// 		id: 'cui_' + core.addon.path.name,
+    	// 		defaultArea: CustomizableUI.AREA_NAVBAR,
+    	// 		label: formatStringFromNameCore('gui_label', 'main'),
+    	// 		tooltiptext: formatStringFromNameCore('gui_tooltip', 'main'),
+    	// 		onCommand: guiClick
+    	// 	});
+    	// }
+		//
+        // // register must go after the above, as i set gCuiCssUri above
+        // windowListener.register();
 
-        Services.mm.loadFrameScript(core.addon.path.scripts + 'MainFramescript.js?' + core.addon.cache_key, true);
-
-        // desktop:insert_gui
-        if (core.os.name != 'android') {
-    		// determine gCuiCssFilename for windowListener.register
-    		gCuiCssUri = Services.io.newURI(core.addon.path.styles + 'cui.css', null, null);
-
-    		// insert cui
-    		Cu.import('resource:///modules/CustomizableUI.jsm');
-    		CustomizableUI.createWidget({
-    			id: 'cui_' + core.addon.path.name,
-    			defaultArea: CustomizableUI.AREA_NAVBAR,
-    			label: formatStringFromNameCore('gui_label', 'main'),
-    			tooltiptext: formatStringFromNameCore('gui_tooltip', 'main'),
-    			onCommand: guiClick
-    		});
-    	}
-
-        // register must go after the above, as i set gCuiCssUri above
-        windowListener.register();
-
+		callInMainworker('watchMediakeys');
     });
     gWkComm.putMessage('dummyForInstantInstantiate');
 }
@@ -98,30 +99,30 @@ function startup(aData, aReason) {
 function shutdown(aData, aReason) {
 	if (aReason == APP_SHUTDOWN) { return }
 
-	Services.mm.removeDelayedFrameScript(core.addon.path.scripts + 'MainFramescript.js?' + core.addon.cache_key);
-
-    Comm.server.unregAll('framescript');
+	// Services.mm.removeDelayedFrameScript(core.addon.path.scripts + 'MainFramescript.js?' + core.addon.cache_key);
+	//
+    // Comm.server.unregAll('framescript');
     Comm.server.unregAll('worker');
-
-    // desktop_android:insert_gui
-    if (core.os.name != 'android') {
-		CustomizableUI.destroyWidget('cui_' + core.addon.path.name);
-	} else {
-		for (var androidMenu of gAndroidMenus) {
-			var domwin;
-			try {
-				domwin = androidMenu.domwin.get();
-			} catch(ex) {
-				// its dead
-				continue;
-			}
-			if (!domwin) {
-				// its dead
-				continue;
-			}
-			domwin.NativeWindow.menu.remove(androidMenu.menuid);
-		}
-	}
+	//
+    // // desktop_android:insert_gui
+    // if (core.os.name != 'android') {
+	// 	CustomizableUI.destroyWidget('cui_' + core.addon.path.name);
+	// } else {
+	// 	for (var androidMenu of gAndroidMenus) {
+	// 		var domwin;
+	// 		try {
+	// 			domwin = androidMenu.domwin.get();
+	// 		} catch(ex) {
+	// 			// its dead
+	// 			continue;
+	// 		}
+	// 		if (!domwin) {
+	// 			// its dead
+	// 			continue;
+	// 		}
+	// 		domwin.NativeWindow.menu.remove(androidMenu.menuid);
+	// 	}
+	// }
 }
 
 // start - addon functions

@@ -20,9 +20,9 @@ function init(objCore) { // function name init required for SIPWorker
 
 	core = objCore;
 
-	// lazy set up child worker
-	gChildComm = new Comm.server.worker(core.addon.path.scripts + 'ChildWorker.js');
-	callInChildworker = Comm.callInX.bind(null, 'gChildComm', null);
+	// // lazy set up child worker
+	// gChildComm = new Comm.server.worker(core.addon.path.scripts + 'ChildWorker.js');
+	// callInChildworker = Comm.callInX.bind(null, 'gChildComm', null);
 
 	// add to core
 	core.os.name = OS.Constants.Sys.Name.toLowerCase();
@@ -34,24 +34,24 @@ function init(objCore) { // function name init required for SIPWorker
 	formatStringFromName('blah', 'main');
 	core.addon.l10n = _cache_formatStringFromName_packages;
 
-	// // Import ostypes
-	// importScripts(core.addon.path.modules + 'cutils.jsm');
-	// importScripts(core.addon.path.modules + 'ctypes_math.jsm');
-	// switch (core.os.mname) {
-	// 	case 'winnt':
-	// 	case 'winmo':
-	// 	case 'wince':
-	// 		importScripts(core.addon.path.modules + 'ostypes_win.jsm');
-	// 		break
-	// 	case 'gtk':
-	// 		importScripts(core.addon.path.modules + 'ostypes_x11.jsm');
-	// 		break;
-	// 	case 'darwin':
-	// 		importScripts(core.addon.path.modules + 'ostypes_mac.jsm');
-	// 		break;
-	// 	default:
-	// 		throw new Error('Operating system, "' + OS.Constants.Sys.Name + '" is not supported');
-	// }
+	// Import ostypes
+	importScripts(core.addon.path.scripts + 'ostypes/cutils.jsm');
+	importScripts(core.addon.path.scripts + 'ostypes/ctypes_math.jsm');
+	switch (core.os.mname) {
+		case 'winnt':
+		case 'winmo':
+		case 'wince':
+			importScripts(core.addon.path.scripts + 'ostypes/ostypes_win.jsm');
+			break
+		case 'gtk':
+			importScripts(core.addon.path.scripts + 'ostypes/ostypes_x11.jsm');
+			break;
+		case 'darwin':
+			importScripts(core.addon.path.scripts + 'ostypes/ostypes_mac.jsm');
+			break;
+		default:
+			throw new Error('Operating system, "' + OS.Constants.Sys.Name + '" is not supported');
+	}
 
 	// OS Specific Init
 	switch (core.os.name) {
@@ -81,20 +81,140 @@ function init(objCore) { // function name init required for SIPWorker
 
 // start - addon functions
 function dummyForInstantInstantiate() {}
+self.onclose = function() {
+	console.log('doing mainworker term proc');
+
+	workerComm_unregAll();
+
+	switch (core.os.mname) {
+		case 'android':
+
+				if (OSStuff.jenv) {
+					JNI.UnloadClasses(OSStuff.jenv);
+				}
+
+			break;
+	}
+
+	console.log('ok ready to terminate');
+}
 
 function fetchCore() {
 	return core;
 }
 
-function doRoutine() {
-	callInChildworker('routine', undefined, function(aArg, aComm) {
-		var { __PROGRESS:progress, text } = aArg;
-		if (progress) {
-			console.log('progress - ', text);
-		} else {
-			console.log(text);
-		}
-	});
+function watchMediakeys() {
+	console.error('in watchMediakeys');
+	switch (core.os.mname) {
+		case 'darwin':
+
+				// var psn = ostypes.TYPE.ProcessSerialNumber();
+				// var rez_GetCurrentProcess = ostypes.API('GetCurrentProcess')(psn.address());
+				// console.log('rez_GetCurrentProcess:', rez_GetCurrentProcess, rez_GetCurrentProcess.toString());
+
+				// OSStuff.eventTap = ostypes.API('CGEventTapCreateForPSN')(psn.address(), ostypes.CONST.kCGHeadInsertEventTap, ostypes.CONST.kCGEventTapOptionDefault, mask, OSStuff.MouseTracker, null);
+				// console.log('OSStuff.mouseEventTap:', OSStuff.mouseEventTap, OSStuff.mouseEventTap.toString());
+
+				var tapEventCallback_js = function(proxy, type, event, refcon) {
+
+					if (cutils.jscEqual(type, ostypes.CONST.kCGEventTapDisabledByTimeout)) {
+						console.error('RENABLING!!!!');
+						ostypes.API('CGEventTapEnable')(OSStuff._eventPort, true);
+						return event;
+					} else if (cutils.jscEqual(type, ostypes.CONST.kCGEventTapDisabledByUserInput)) {
+						// Was disabled manually by -[pauseTapOnTapThread]
+						console.error('this should never happen!!!! but return event so things work as my tap is non-passive');
+						return event;
+					}
+
+					if (!cutils.jscEqual(type, ostypes.CONST.NX_SYSDEFINED)) {
+						return event;
+					} else {
+						var NSEvent = ostypes.HELPER.class('NSEvent');
+						var nsEvent = ostypes.API('objc_msgSend')(NSEvent, ostypes.HELPER.sel('eventWithCGEvent:'), event);
+
+						var subtype = ostypes.API('objc_msgSend')(nsEvent, ostypes.HELPER.sel('subtype'));
+						console.log('subtype:', subtype);
+						subtype = cutils.jscGetDeepest(ctypes.cast(subtype, ostypes.TYPE.NSUInteger));
+						console.log('casted subtype:', subtype);
+
+						if (!cutils.jscEqual(subtype, 8)) {
+							return event;
+						} else {
+							var data1 = ostypes.API('objc_msgSend')(nsEvent, ostypes.HELPER.sel('data1'));
+							console.log('data1:', data1);
+							data1 = cutils.jscGetDeepest(ctypes.cast(data1, ostypes.TYPE.NSUInteger));
+							console.log('casted data1:', data1);
+
+							var keyCode = data1 >>> 16;
+							var keyRepeat = !!(data1 & 0x1);
+							var keyUp = data1 & 0x0100;
+
+							switch (keyCode) {
+								case ostypes.CONST.NX_KEYTYPE_PLAY_PAUSE:
+										console.log('NX_KEYTYPE_PLAY_PAUSE', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
+									break;
+								case ostypes.CONST.NX_KEYTYPE_NEXT:
+										console.log('NX_KEYTYPE_NEXT', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
+									break;
+								case ostypes.CONST.NX_KEYTYPE_FAST:
+										console.log('NX_KEYTYPE_FAST', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
+									break;
+								case ostypes.CONST.NX_KEYTYPE_PREVIOUS:
+										console.log('NX_KEYTYPE_PREVIOUS', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
+									break;
+								case ostypes.CONST.NX_KEYTYPE_REWIND:
+										console.log('NX_KEYTYPE_REWIND', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
+									break;
+							}
+
+							return event;
+
+							// if consume with return null should i do a [nsEvent retain]? as they do here - https://github.com/nevyn/SPMediaKeyTap/blob/master/SPMediaKeyTap.m#L228
+						}
+					}
+
+					return event;
+				};
+				OSStuff.tapEventCallback = ostypes.TYPE.CGEventTapCallBack(tapEventCallback_js);
+
+				// Add an event tap to intercept the system defined media key events
+				OSStuff._eventPort = ostypes.API('CGEventTapCreate')(ostypes.CONST.kCGSessionEventTap,
+																	ostypes.CONST.kCGHeadInsertEventTap,
+																	ostypes.CONST.kCGEventTapOptionDefault,
+																	ostypes.API('CGEventMaskBit')(ostypes.CONST.NX_SYSDEFINED),
+																	OSStuff.tapEventCallback,
+																	null);
+
+				console.log('OSStuff._eventPort:', OSStuff._eventPort);
+
+				OSStuff._eventPortSource = ostypes.API('CFMachPortCreateRunLoopSource')(ostypes.CONST.kCFAllocatorSystemDefault, OSStuff._eventPort, 0);
+				console.log('OSStuff._eventPortSource:', OSStuff._eventPortSource);
+
+				if (OSStuff._eventPortSource.isNull()) {
+					console.error('ERROR: Failed to get _eventPortSource as it is null!');
+					throw new Error('ERROR: Failed to get _eventPortSource as it is null!');
+				} else {
+					OSStuff.aLoop = ostypes.API('CFRunLoopGetCurrent')();
+					console.log('OSStuff.aLoop:', OSStuff.aLoop, OSStuff.aLoop.toString());
+					OSStuff.runLoopMode = ostypes.HELPER.makeCFStr('com.mozilla.firefox.osxmediatap');
+
+					ostypes.API('CFRunLoopAddSource')(OSStuff.aLoop, OSStuff._eventPortSource, OSStuff.runLoopMode);
+					console.log('did CFRunLoopAddSource');
+					// while (true) {
+
+						var rez_CFRunLoopRunInMode = ostypes.API('CFRunLoopRunInMode')(OSStuff.runLoopMode, 30, false); // 2nd arg is seconds
+						console.log('rez_CFRunLoopRunInMode:', rez_CFRunLoopRunInMode);
+
+					// }
+				}
+
+			break;
+		default:
+			console.error('Your OS is not supported');
+			throw new Error('Your OS is not supported');
+	}
+	console.error('out watchMediakeys');
 }
 
 // start - common helper functions
