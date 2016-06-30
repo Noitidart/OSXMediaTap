@@ -151,8 +151,8 @@ function watchMediakeys() {
 							var keyUp = data1 & 0x0100;
 
 							switch (keyCode) {
-								case ostypes.CONST.NX_KEYTYPE_PLAY_PAUSE:
-										console.log('NX_KEYTYPE_PLAY_PAUSE', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
+								case ostypes.CONST.NX_KEYTYPE_PLAY:
+										console.log('NX_KEYTYPE_PLAY', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
 									break;
 								case ostypes.CONST.NX_KEYTYPE_NEXT:
 										console.log('NX_KEYTYPE_NEXT', 'keyRepeat:', keyRepeat, 'keyUp:', keyUp);
